@@ -23,6 +23,37 @@ def log(time_entry)
   @file.puts time_entry.inspect
 end
 
+def debugging?
+  true
+end
+
+def save_to_basecamp(basecamp_record)
+  if debugging?
+    puts "SAVING #{basecamp_record.inspect}"
+    true
+  else
+    # basecamp_record.save
+  end
+end
+
+def save_to_freshbooks(freshbooks_record)
+  if debugging?
+    puts "SAVING #{freshbooks_record.inspect}"
+    true
+  else
+    # freshbooks_record.create
+  end
+end
+
+def delete_from_freshbooks(freshbooks_record)
+  if debugging?
+    puts "DELETING #{freshbooks_record.inspect}"
+    true
+  else
+    # freshbooks_record.delete
+  end
+end
+
 @settings = YAML::load_file('roundandsync.yaml')
 
 FreshBooks.setup(@settings['freshbooks_domain'], 
@@ -51,24 +82,24 @@ time_entries.each do |original_time_entry|
     basecamp_time_entry.body = "#{original_time_entry.notes} (synced from FreshBooks ID ##{original_time_entry.id})"
     basecamp_time_entry.hours = rounded_time
     
-    # if basecamp_time_entry.save
-    #   new_time_entry = FreshBooks::TimeEntry.new
-    #   new_time_entry.project_id = original_time_entry.project_id
-    #   new_time_entry.task_id = original_time_entry.task_id
-    #   new_time_entry.date = original_time_entry.date
-    #   new_time_entry.notes = "#{original_time_entry.notes} (rounded from #{original_time} to #{rounded_time} and #{TRIGGER} ID ##{basecamp_time_entry.id})"
-    #   new_time_entry.hours = rounded_time
-    # 
-    #   if new_time_entry.create
-    #     unless original_time_entry.delete
-    #       puts FreshBooks.last_response.error_msg
-    #     end
-    #   else
-    #     puts FreshBooks.last_response.error_msg
-    #   end
-    # else
-    #   STDERR.puts "Unable to save to Basecamp"
-    # end
+    if save_to_basecamp(basecamp_time_entry)
+      new_time_entry = FreshBooks::TimeEntry.new
+      new_time_entry.project_id = original_time_entry.project_id
+      new_time_entry.task_id = original_time_entry.task_id
+      new_time_entry.date = original_time_entry.date
+      new_time_entry.notes = "#{original_time_entry.notes} (rounded from #{original_time} to #{rounded_time} and #{TRIGGER} ID ##{basecamp_time_entry.id})"
+      new_time_entry.hours = rounded_time
+    
+      if save_to_freshbooks(new_time_entry)
+        unless delete_from_freshbooks(original_time_entry)
+          puts FreshBooks.last_response.error_msg
+        end
+      else
+        puts FreshBooks.last_response.error_msg
+      end
+    else
+      STDERR.puts "Unable to save to Basecamp"
+    end
 
   else
     puts "Skipping #{original_time_entry.notes}"
