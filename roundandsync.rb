@@ -66,7 +66,7 @@ Basecamp.establish_connection!(@settings['basecamp_domain'],
 time_entries = FreshBooks::TimeEntry.list(
                 'date_from' => 2.days.ago.strftime('%Y-%m-%d'))
 
-@file = File.open(Time.now.strftime("%Y_%m_%d_%M_%S.log"), 'w')
+@file = File.open(Time.now.strftime("logs/%Y_%m_%d_%M_%S.log"), 'w')
 
 original_total = 0.0
 rounded_total = 0.0
