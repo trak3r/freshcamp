@@ -64,9 +64,12 @@ Basecamp.establish_connection!(@settings['basecamp_domain'],
                                @settings['basecamp_username'])
 
 time_entries = FreshBooks::TimeEntry.list(
-                'date_from' => 3.days.ago.strftime('%Y-%m-%d'))
+                'date_from' => 2.days.ago.strftime('%Y-%m-%d'))
 
 @file = File.open(Time.now.strftime("%Y_%m_%d_%M_%S.log"), 'w')
+
+original_total = 0.0
+rounded_total = 0.0
 
 time_entries.each do |original_time_entry|
   if eligible?(original_time_entry)
@@ -74,6 +77,9 @@ time_entries.each do |original_time_entry|
 
     original_time = original_time_entry.hours
     rounded_time = original_time.to_f.round(0.25)
+    
+    original_total += original_time
+    rounded_total += rounded_time
 
     puts "Rounding #{original_time} to #{rounded_time} for \"#{original_time_entry.notes}\""
 
@@ -107,3 +113,5 @@ time_entries.each do |original_time_entry|
 end
 
 @file.close
+
+puts "In total rounded #{original_total} hours to #{rounded_total} hours."
