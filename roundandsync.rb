@@ -9,9 +9,22 @@ require 'yaml'
 
 TRIGGER = 'synced to Basecamp'
 
+def has_mapped_project?(freshbooks_time_entry)
+  @settings['project_mappings'].keys.include?(freshbooks_time_entry.project_id)
+end
+
+def already_tagged?(freshbooks_time_entry)
+  freshbooks_time_entry.notes.include?(TRIGGER)
+end
+
+def is_travel?(freshbooks_time_entry)
+  # project_id=19, task_id=9
+end
+
 def eligible?(freshbooks_time_entry)
-  return false unless @settings['project_mappings'].keys.include?(freshbooks_time_entry.project_id)
-  return false if freshbooks_time_entry.notes.include?(TRIGGER)
+  return false unless has_mapped_project?(freshbooks_time_entry)
+  return false if already_tagged?(freshbooks_time_entry)
+  return false if is_travel?(freshbooks_time_entry)
   true
 end
 
@@ -29,7 +42,7 @@ end
 
 def save_to_basecamp(basecamp_record)
   if debugging?
-    puts "SAVING #{basecamp_record.inspect}"
+    puts "\nSAVING #{basecamp_record.inspect}"
     true
   else
     # basecamp_record.save
@@ -38,7 +51,7 @@ end
 
 def save_to_freshbooks(freshbooks_record)
   if debugging?
-    puts "SAVING #{freshbooks_record.inspect}"
+    puts "\nSAVING #{freshbooks_record.inspect}"
     true
   else
     # freshbooks_record.create
@@ -47,7 +60,7 @@ end
 
 def delete_from_freshbooks(freshbooks_record)
   if debugging?
-    puts "DELETING #{freshbooks_record.inspect}"
+    puts "\nDELETING #{freshbooks_record.inspect}"
     true
   else
     # freshbooks_record.delete
@@ -64,7 +77,7 @@ Basecamp.establish_connection!(@settings['basecamp_domain'],
                                @settings['basecamp_username'])
 
 time_entries = FreshBooks::TimeEntry.list(
-                'date_from' => 2.days.ago.strftime('%Y-%m-%d'))
+                'date_from' => 7.days.ago.strftime('%Y-%m-%d'))
 
 @file = File.open(Time.now.strftime("logs/%Y_%m_%d_%M_%S.log"), 'w')
 
@@ -108,7 +121,7 @@ time_entries.each do |original_time_entry|
     end
 
   else
-    puts "Skipping #{original_time_entry.notes}"
+    puts "\nSKIPPING #{original_time_entry.notes}"
   end
 end
 
