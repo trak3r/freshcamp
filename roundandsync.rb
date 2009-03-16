@@ -18,7 +18,7 @@ def already_tagged?(freshbooks_time_entry)
 end
 
 def is_travel?(freshbooks_time_entry)
-  # project_id=19, task_id=9
+  (19 == freshbooks_time_entry.project_id) && (9 == freshbooks_time_entry.task_id)
 end
 
 def eligible?(freshbooks_time_entry)
