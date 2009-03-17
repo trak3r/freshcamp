@@ -77,7 +77,7 @@ Basecamp.establish_connection!(@settings['basecamp_domain'],
                                @settings['basecamp_username'])
 
 time_entries = FreshBooks::TimeEntry.list(
-                'date_from' => 7.days.ago.strftime('%Y-%m-%d'))
+                'date_from' => (ARGV[0].to_i || 1).days.ago.strftime('%Y-%m-%d'))
 
 @file = File.open(Time.now.strftime("logs/%Y_%m_%d_%M_%S.log"), 'w')
 
