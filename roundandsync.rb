@@ -37,7 +37,7 @@ def log(time_entry)
 end
 
 def debugging?
-  true
+  false
 end
 
 def save_to_basecamp(basecamp_record)
@@ -45,7 +45,7 @@ def save_to_basecamp(basecamp_record)
     puts "\nSAVING #{basecamp_record.inspect}"
     true
   else
-    # basecamp_record.save
+    basecamp_record.save
   end
 end
 
@@ -54,7 +54,7 @@ def save_to_freshbooks(freshbooks_record)
     puts "\nSAVING #{freshbooks_record.inspect}"
     true
   else
-    # freshbooks_record.create
+    freshbooks_record.create
   end
 end
 
@@ -63,7 +63,7 @@ def delete_from_freshbooks(freshbooks_record)
     puts "\nDELETING #{freshbooks_record.inspect}"
     true
   else
-    # freshbooks_record.delete
+    freshbooks_record.delete
   end
 end
 
@@ -74,7 +74,7 @@ FreshBooks.setup(@settings['freshbooks_domain'],
 
 Basecamp.establish_connection!(@settings['basecamp_domain'], 
                                @settings['basecamp_username'], 
-                               @settings['basecamp_username'])
+                               @settings['basecamp_password'])
 
 time_entries = FreshBooks::TimeEntry.list(
                 'date_from' => (ARGV[0].to_i || 1).days.ago.strftime('%Y-%m-%d'))
