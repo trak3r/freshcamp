@@ -63,7 +63,15 @@ def delete_from_freshbooks(freshbooks_record)
     puts "\nDELETING #{freshbooks_record.inspect}"
     true
   else
-    freshbooks_record.delete
+    begin
+      freshbooks_record.delete
+    rescue Exception => e
+      if e.message =~ /Project not found./
+        return true # http://forum.freshbooks.com/viewtopic.php?pid=17903
+      else
+        raise e
+      end
+    end
   end
 end
 
