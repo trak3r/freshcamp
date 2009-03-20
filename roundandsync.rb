@@ -40,12 +40,12 @@ def debugging?
   false
 end
 
-def save_to_basecamp(basecamp_record)
+def save_to_basecamp(basecamp_time_entry)
   if debugging?
-    puts "\nSAVING #{basecamp_record.inspect}"
+    puts "\nSAVING #{basecamp_time_entry.inspect}"
     true
   else
-    basecamp_record.save
+    basecamp_time_entry.save
   end
 end
 
@@ -74,7 +74,8 @@ FreshBooks.setup(@settings['freshbooks_domain'],
 
 Basecamp.establish_connection!(@settings['basecamp_domain'], 
                                @settings['basecamp_username'], 
-                               @settings['basecamp_password'])
+                               @settings['basecamp_password'],
+                               true)
 
 time_entries = FreshBooks::TimeEntry.list(
                 'date_from' => (ARGV[0].to_i || 1).days.ago.strftime('%Y-%m-%d'))
@@ -96,10 +97,11 @@ time_entries.each do |original_time_entry|
 
     puts "Rounding #{original_time} to #{rounded_time} for \"#{original_time_entry.notes}\""
 
-    basecamp_time_entry = Basecamp::TimeEntry.new
-    basecamp_time_entry.project_id = xlated_project_id(original_time_entry)
-    basecamp_time_entry.body = "#{original_time_entry.notes} (synced from FreshBooks ID ##{original_time_entry.id})"
+    basecamp_time_entry = Basecamp::TimeEntry.new(:project_id => xlated_project_id(original_time_entry))
+    basecamp_time_entry.description = "#{original_time_entry.notes} (synced from FreshBooks ID ##{original_time_entry.id})"
     basecamp_time_entry.hours = rounded_time
+    basecamp_time_entry.date = original_time_entry.date
+    basecamp_time_entry.person_id = @settings['basecamp_person_id']
     
     if save_to_basecamp(basecamp_time_entry)
       new_time_entry = FreshBooks::TimeEntry.new
@@ -117,7 +119,7 @@ time_entries.each do |original_time_entry|
         puts FreshBooks.last_response.error_msg
       end
     else
-      STDERR.puts "Unable to save to Basecamp"
+      STDERR.puts "Unable to save to Basecamp; no data modified."
     end
 
   else
