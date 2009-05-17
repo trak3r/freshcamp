@@ -40,6 +40,10 @@ def debugging?
   false
 end
 
+def just_rounding?(freshbooks_time_entry)
+  1972 == xlated_project_id(freshbooks_time_entry)
+end
+
 def save_to_basecamp(basecamp_time_entry)
   if debugging?
     puts "\nSAVING #{basecamp_time_entry.inspect}"
@@ -105,19 +109,25 @@ time_entries.each do |original_time_entry|
 
     puts "Rounding #{original_time} to #{rounded_time} for \"#{original_time_entry.notes}\""
 
-    basecamp_time_entry = Basecamp::TimeEntry.new(:project_id => xlated_project_id(original_time_entry))
-    basecamp_time_entry.description = "#{original_time_entry.notes} (synced from FreshBooks ID ##{original_time_entry.id})"
-    basecamp_time_entry.hours = rounded_time
-    basecamp_time_entry.date = original_time_entry.date
-    basecamp_time_entry.person_id = @settings['basecamp_person_id']
+    unless just_rounding?(original_time_entry)
+      basecamp_time_entry = Basecamp::TimeEntry.new(:project_id => xlated_project_id(original_time_entry))
+      basecamp_time_entry.description = "#{original_time_entry.notes} (synced from FreshBooks ID ##{original_time_entry.id})"
+      basecamp_time_entry.hours = rounded_time
+      basecamp_time_entry.date = original_time_entry.date
+      basecamp_time_entry.person_id = @settings['basecamp_person_id']
+    end
     
-    if save_to_basecamp(basecamp_time_entry)
+    if just_rounding?(original_time_entry) or save_to_basecamp(basecamp_time_entry)
       new_time_entry = FreshBooks::TimeEntry.new
       new_time_entry.project_id = original_time_entry.project_id
       new_time_entry.task_id = original_time_entry.task_id
       new_time_entry.date = original_time_entry.date
-      new_time_entry.notes = "#{original_time_entry.notes} (rounded from #{original_time} to #{rounded_time} and #{TRIGGER} ID ##{basecamp_time_entry.id})"
       new_time_entry.hours = rounded_time
+      if just_rounding?(original_time_entry)
+        new_time_entry.notes = "#{original_time_entry.notes} (#{TRIGGER} #{original_time})"
+      else
+        new_time_entry.notes = "#{original_time_entry.notes} (rounded from #{original_time} to #{rounded_time} and #{TRIGGER} ID ##{basecamp_time_entry.id})"
+      end
     
       if save_to_freshbooks(new_time_entry)
         unless delete_from_freshbooks(original_time_entry)
